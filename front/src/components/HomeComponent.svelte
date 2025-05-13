@@ -6,67 +6,57 @@
 </script>
 
 <script lang="ts">
-    import { StockService } from "../services/stocks.service";
+    import { DataService } from "../services/data.service";
     import { onDestroy, onMount } from "svelte";
-    import type {Stock} from "../entities/stock";
+    import type { Data } from "../entities/data";
     import { SignalRService } from "../services/signalr.service";
-    import CardComponent from "./CardComponent.svelte";
+    // import CardComponent from "./CardComponent.svelte";
+    import chartjs from 'chart.js/auto';
     let props = $props();
-    let stocks = $state([] as Stock[]);
-    let rises = $state([] as Stock[]);
-    let falls = $state([] as Stock[]);
-    $inspect("home stocks",stocks);
-    $inspect("rises",rises);
-    $inspect("falls",falls);
+    let data = $state([] as Data[]);
+    $inspect("data", data);
+    let chartY: number[] = [];
+    let chartX: string[] = [];
+    let ctx;
+    let chartCanvas: any;
 
     onMount(async () => {
-        const filterAndSort = (s: Stock[]) => {
-            rises = s.filter(s => s.variation >= 0);
-            falls = s.filter(s => s.variation < 0);
-            rises = rises.sort((a, b) => b.variation - a.variation);
-            falls = falls.sort((a, b) => a.variation - b.variation);
-        }
-        SignalRService.init();
-        SignalRService.on("messageReceived", (newStocks: Stock[]) => {
-            console.log('new values', newStocks);
-            stocks = newStocks;
-            filterAndSort(stocks);
+        // SignalRService.init();
+        // SignalRService.on("messageReceived", (newData: Data[]) => {
+        //     console.log('new values', newData);
+        //     stocks = newStocks;
+        //     filterAndSort(stocks);
+        // });
+        let stockService = new DataService();
+        data = await stockService.getAll();
+        console.log("data", data);
+        ctx = chartCanvas.getContext('2d');
+        chartY = data.map((item) => item.value);
+        chartX = data.map((item) => item.createdAt.toString().split("T")[0]);
+        var chart = new chartjs(ctx, {
+            type: 'line',
+            data: {
+                    labels: chartX,
+                    datasets: [{
+                            label: 'Data',
+                            backgroundColor: 'rgb(255, 99, 132)',
+                            borderColor: 'rgb(255, 99, 132)',
+                            data: chartY
+                    }]
+            }
         });
-        let stockService = new StockService();
-        stocks = await stockService.getAll();
-        filterAndSort(stocks);
-        
     });
 
     onDestroy(() => {
         SignalRService.off("messageReceived", () => {});
     });
+
 </script>
 
 <style>
 </style>
 
 <div class="w-[100%]">
-    <div style="" class="w-[600px] m-auto flex">
-        <div style="flex:1">
-            <div class="text-center">
-                <p>RISES</p>
-            </div>
-            {#each rises as stock}
-                {#if stock.variation >= 0}
-                    <CardComponent {stock} variation={stock.variation} />
-                {/if}
-            {/each}
-        </div>
-        <div style="flex:1">
-            <div class="text-center">
-                <p>FALLS</p>
-            </div>
-            {#each falls as stock}
-                {#if stock.variation < 0}
-                    <CardComponent {stock} variation={stock.variation}/>
-                {/if}
-            {/each}
-        </div>
-    </div>    
+    <canvas bind:this={chartCanvas} id="myChart"></canvas>
+
 </div>
