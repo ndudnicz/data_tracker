@@ -1,13 +1,13 @@
 <script lang="ts">
     import {DataService} from "../services/data.service";
     import {Data} from "../entities/data";
-	let { showModal = $bindable(), data = $bindable() } = $props();
+	let { showDataModal = $bindable(), data = $bindable() } = $props();
 
     let dialog: any = $state(); // HTMLDialogElement
     let newdata: any = $state(42);
 
 	$effect(() => {
-		if (showModal) dialog.showModal();
+		if (showDataModal) dialog.showModal();
 	});
 
     let submitData = async () => {
@@ -21,7 +21,7 @@
 
 <dialog
 	bind:this={dialog}
-	onclose={() => (showModal = false)}
+	onclose={() => (showDataModal = false)}
 	onclick={(e) => { if (e.target === dialog) dialog.close(); }}
 
 >
@@ -93,6 +93,7 @@
         height: 80%;
     }
     .modal-footer {
-        height: 10%;
+		display: flex;
+		justify-content: flex-end;
     }
 </style>

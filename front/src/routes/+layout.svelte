@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	
 	let { children } = $props();
 </script>
 <nav class="bg-gray-800 text-white p-4">
